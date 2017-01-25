@@ -11,6 +11,12 @@ object CommandParser {
   def apply(buf: Buf): Command = {
     val bytes = Buf.ByteArray.Owned.extract(buf)
     bytes match {
+      case CommandParts("PING", args) if args.size <= 1 =>
+        if(args.size == 1) {
+          Ping(Some(args(0)))
+        } else {
+          Ping(None)
+        }
       case CommandParts("GET", args) if args.size == 1 =>
         Get(args(0))
       case CommandParts("MGET", args) =>

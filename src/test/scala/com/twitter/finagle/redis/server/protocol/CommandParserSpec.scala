@@ -47,7 +47,26 @@ class CommandParserSpec extends FreeSpec with Matchers {
       set.xx should be (false)
     }
 
+    "SET key value XX" in {
+      val buf = Buf.Utf8("SET key value XX")
+      val command = CommandParser(buf)
+      command shouldBe a[Set]
+      val set = command.asInstanceOf[Set]
+      new String(set.key) should be ("key")
+      new String(set.value) should be ("value")
+      set.ex should be (None)
+      set.px should be (None)
+      set.nx should be (false)
+      set.xx should be (true)
+    }
 
+    "SET key value PX 12 NX" in {
+      val buf = Buf.Utf8("SET key value PX 12 NX")
+      val command = CommandParser(buf)
+      command shouldBe a[Set]
+      val set = command.asInstanceOf[Set]
+      set should be (Set("key".getBytes, "value".getBytes, None, Some(12), true, false))
+    }
   }
 
 

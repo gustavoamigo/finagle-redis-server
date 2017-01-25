@@ -6,7 +6,6 @@ import org.jboss.netty.handler.codec.frame.{DelimiterBasedFrameDecoder, Delimite
 
 object BufServerPipelineFactory extends ChannelPipelineFactory {
     def getPipeline = {
-      val codec = new BufCodec
       val pipeline = Channels.pipeline()
       pipeline.addLast("line", new DelimiterBasedFrameDecoder(Int.MaxValue, Delimiters.lineDelimiter: _*))
       pipeline.addLast("endec", new BufCodec)

@@ -1,9 +1,38 @@
 package com.twitter.finagle.redis.server.protocol
 
+import java.util
+
+import com.twitter.finagle.redis.server.ByteArrayWrapper
 import com.twitter.io.Buf
 
 import scala.annotation.tailrec
 object CommandParser {
+
+  def apply(buf: Buf): Command = {
+    val bytes = Buf.ByteArray.Owned.extract(buf)
+    bytes match {
+      case CommandParts("GET", args) if args.size == 1 =>
+        Get(args(0))
+      case CommandParts("MGET", args) =>
+        Mget(args.map(ba => new ByteArrayWrapper(ba)))
+      case CommandParts("SET", args) if args.size >= 2 =>
+        Set(
+          key = args(0),
+          value = args(1),
+          nx = parseArgBoolean(args, "NX"),
+          xx = parseArgBoolean(args, "XX"),
+          ex = parseArgKeyValue(args, "EX"),
+          px = parseArgKeyValue(args, "PX")
+        )
+      case CommandParts("APPEND", args) if args.size == 2 =>
+        Append(
+          key = args(0),
+          value = args(1)
+        )
+      case error =>
+        Unknown(s"unknown command '${new String(error)}'")
+    }
+  }
 
   @tailrec
   def extractParts(bytes: Array[Byte], acc: List[Array[Byte]] = List.empty): List[Array[Byte]] = {
@@ -39,7 +68,7 @@ object CommandParser {
     }
   }
 
-  object CommandParts {
+  private object CommandParts {
     def unapply(bytes: Array[Byte]): Option[(String, List[Array[Byte]])] = {
       bytes.apply(0).toChar match {
         case '-'|'+'|':'|'$'|'*' => None
@@ -51,7 +80,7 @@ object CommandParser {
   }
 
   private def parseArgKeyValue(args: List[Array[Byte]], argKey: String): Option[Int] = {
-    val pos = args.indexOf("EX".getBytes)
+    val pos = args.indexWhere(arr => util.Arrays.equals(arr, argKey.getBytes))
     if(pos != -1) {
       Some(Integer.valueOf(new String(args(pos + 1))))
     } else {
@@ -59,24 +88,9 @@ object CommandParser {
     }
   }
 
-  def apply(buf: Buf): Command = {
-    val bytes = Buf.ByteArray.Owned.extract(buf)
-    bytes match {
-      case CommandParts("GET", args) =>
-        Get(args(0))
-      case CommandParts("SET", args) if args.size >= 2 =>
-        Set(
-          key = args(0),
-          value = args(1),
-          nx = args.contains("NX".getBytes),
-          xx = args.contains("XX".getBytes),
-          ex = parseArgKeyValue(args, "EX"),
-          px = parseArgKeyValue(args, "PX")
-        )
-      case _ =>
-        Error("Command not found")
+  private def parseArgBoolean(args: List[Array[Byte]], argKey: String) =
+    args.exists(arr => util.Arrays.equals(arr, argKey.getBytes))
 
-    }
-  }
+
 
 }

@@ -47,6 +47,20 @@ class CommandRunnerSpec extends FreeSpec with Matchers {
     reply2 shouldBe a[BulkStringResp]
     val value = reply2.asInstanceOf[BulkStringResp]
     new String(value.str) should be ("valueappended")
+  }
 
+  "INCR key" in {
+    val (_, kv0) = runCmd("SET key 1", Map.empty)
+    val (reply1, kv1) = runCmd("INCR key", kv0)
+    reply1 shouldBe a[IntegerResp]
+    val integers = reply1.asInstanceOf[IntegerResp]
+    integers.int should be (2)
+  }
+
+  "INCR newKey" in {
+    val (reply1, kv1) = runCmd("INCR newKey", Map.empty)
+    reply1 shouldBe a[IntegerResp]
+    val integers = reply1.asInstanceOf[IntegerResp]
+    integers.int should be (1)
   }
 }

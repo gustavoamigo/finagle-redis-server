@@ -40,6 +40,8 @@ object CommandParser {
           key = args(0),
           value = args(1)
         )
+      case ("INCR", args) if args.size == 1 =>
+        Incr(args(0))
       case error =>
         println(s"unknown command")
         Unknown(s"unknown command")

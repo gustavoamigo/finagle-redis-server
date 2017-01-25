@@ -2,10 +2,10 @@ package com.twitter.finagle.redis.server.runner
 
 import com.twitter.finagle.redis.server.ByteArrayWrapper
 import com.twitter.finagle.redis.server.protocol._
+import com.twitter.util.Try
 
 sealed trait Value
 case class StringValue(str: ByteArrayWrapper) extends Value
-case class IntegerValue(int: Int) extends Value
 case class ListValue(list: List[Value]) extends Value
 
 object CommandRunner {
@@ -19,6 +19,7 @@ object CommandRunner {
       case c: Set => set(c, kv)
       case c: Mget => mget(c, kv)
       case c: Append => append(c, kv)
+      case c: Incr => incr(c, kv)
       case Unknown(err) => (ErrorResp(err), kv)
     }
   }
@@ -56,5 +57,17 @@ object CommandRunner {
     val value = previous ++ append.value
     val kvUpdated = kv + ((append.key, StringValue(value)))
     (IntegerResp(value.length), kvUpdated)
+  }
+
+  def incr(i: Incr, kv: KV):(Resp, KV) = {
+    val value = kv.get(i.key).collect { case StringValue(str) => str}.getOrElse(new ByteArrayWrapper("0".getBytes))
+    val numOpt = Try(new String(value).toLong).toOption
+    numOpt match {
+      case None => (ErrorResp("value is not an integer or out of range"), kv)
+      case Some(num) =>
+        val newValue =  StringValue((num + 1).toString.getBytes)
+        val kvUpdate = kv + ((i.key, newValue))
+        (IntegerResp(num + 1), kvUpdate)
+    }
   }
 }

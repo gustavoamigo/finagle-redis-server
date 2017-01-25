@@ -6,8 +6,9 @@ import com.twitter.io.Buf
 import org.scalatest._
 
 class CommandRunnerSpec extends FreeSpec with Matchers {
-  def runCmd(cmd: String, kv: CommandRunner.KV): (Resp, KV) =
-    CommandRunner.run(CommandParser.apply(Buf.Utf8(cmd)), kv)
+  def parseCmd(cmd: String): List[Buf] = cmd.split(' ').toList.map(e => Buf.Utf8(e))
+  def runCmd(command: String, kv: CommandRunner.KV): (Resp, KV) =
+    CommandRunner.run(CommandParser.apply(parseCmd(command)), kv)
 
   "SET key value" in {
     val (reply, kv) = runCmd("SET key value", Map.empty)

@@ -8,10 +8,10 @@ import com.twitter.concurrent.AsyncMutex
 import com.twitter.finagle.redis.server.protocol.{Command, CommandParser}
 import com.twitter.io.Buf.ByteArray
 
-class RedisService extends Service[Buf, Buf] {
+class RedisService extends Service[List[Buf], Buf] {
   private var kv: CommandRunner.KV = Map.empty
   private val mutex = new AsyncMutex()
-  override def apply(request: Buf): Future[Buf] = {
+  override def apply(request: List[Buf]): Future[Buf] = {
     //print(new String(Buf.ByteArray.Owned.extract(request)))
     val parsedCmd: Command = CommandParser(request)
     val sync = mutex.acquireAndRunSync {

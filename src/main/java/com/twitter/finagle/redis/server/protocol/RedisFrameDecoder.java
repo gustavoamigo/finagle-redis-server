@@ -1,19 +1,20 @@
 package com.twitter.finagle.redis.server.protocol;
 
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 public class RedisFrameDecoder extends ReplayingDecoder<RedisFrameDecoder.State> {
 
     public RedisFrameDecoder() {
-        super(State.READ_ARRAY_LENGTH, true);
+        super(State.READ_ARRAY_LENGTH, false);
     }
 
     private long arrayLength = 0;
@@ -39,15 +40,16 @@ public class RedisFrameDecoder extends ReplayingDecoder<RedisFrameDecoder.State>
                             checkpoint(State.READ_STRING_LENGTH);
                             return null;
                         default:
-                            lines.add(line);
                             checkpoint(State.READ_ARRAY_LENGTH);
-                            return linesToChannelBuffer(lines);
+                            return new RedisFrame(readPartsFromSingleLine(line));
                     }
                 }
             case READ_STRING_LENGTH:
                 {
                     byte[] line = readLine(buffer);
-                    if(line[0] != '$') throw new Error("Expceted '$'");
+                    if(line[0] != '$') {
+                        throw new Exception("Expected '$'");
+                    }
                     String numStr = new String(line, 1, line.length - 1);
                     stringLength = Long.valueOf(numStr);
                     checkpoint(State.READ_CONTENT);
@@ -63,21 +65,11 @@ public class RedisFrameDecoder extends ReplayingDecoder<RedisFrameDecoder.State>
                     return null;
                 } else {
                     checkpoint(State.READ_ARRAY_LENGTH);
-                    return linesToChannelBuffer(lines);
+                    return new RedisFrame(lines);
                 }
             default:
                 throw new Error("Shouldn't reach here.");
         }
-    }
-
-    private ChannelBuffer linesToChannelBuffer(List<byte[]> lines) {
-        byte[] SPC = {' '};
-        ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer();
-        for(byte[] line: lines) {
-            channelBuffer.writeBytes(line);
-            channelBuffer.writeBytes(SPC);
-        }
-        return channelBuffer;
     }
 
     private byte[] readLine(ChannelBuffer buffer) {
@@ -103,5 +95,37 @@ public class RedisFrameDecoder extends ReplayingDecoder<RedisFrameDecoder.State>
         }
         buffer.skipBytes(2);
         return output.toByteArray();
+    }
+
+    private static List<byte[]> readPartsFromSingleLine(byte[] line) {
+        ArrayList<byte[]> parts = new ArrayList<>();
+        int partStart = 0;
+        boolean betweenQuote = false;
+        for(int i=0; i<line.length; i++) {
+            if(!betweenQuote) {
+                if(line[i] == ' ' && partStart < i) {
+                    final byte[] part = Arrays.copyOfRange(line, partStart, i);
+                    parts.add(part);
+                    partStart = i + 1;
+                } else if (line[i] == '"') {
+                    betweenQuote = true;
+                    partStart = i + 1;
+                }
+            } else {
+                if (line[i] == '"') {
+                    final byte[] part = Arrays.copyOfRange(line, partStart, i);
+                    parts.add(part);
+                    betweenQuote = false;
+                    partStart = i + 2;
+                }
+            }
+        }
+
+        if(partStart < line.length) {
+            final byte[] part = Arrays.copyOfRange(line, partStart, line.length);
+            parts.add(part);
+        }
+
+        return parts;
     }
 }

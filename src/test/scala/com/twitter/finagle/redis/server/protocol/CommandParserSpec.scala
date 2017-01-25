@@ -6,27 +6,29 @@ import org.scalatest._
 
 class CommandParserSpec extends FreeSpec with Matchers {
   "CommandParser" - {
-    "auxilary methods" - {
-      "parts separated with space" in {
-        val array = "SET A myValue".getBytes()
-        val parts = CommandParser.extractParts(array)
-        parts.size should be (3)
-        new String(parts(0)) should be ("SET")
-        new String(parts(1)) should be ("A")
-        new String(parts(2)) should be ("myValue")
-      }
-      "parts separated with double quote" in {
-        val array = "SET A \"my value\"".getBytes()
-        val parts = CommandParser.extractParts(array)
-        parts.size should be (3)
-        new String(parts(0)) should be ("SET")
-        new String(parts(1)) should be ("A")
-        new String(parts(2)) should be ("my value")
-      }
-    }
+//    "auxilary methods" - {
+//      "parts separated with space" in {
+//        val array = "SET A myValue".getBytes()
+//        val parts = CommandParser.extractParts(array)
+//        parts.size should be (3)
+//        new String(parts(0)) should be ("SET")
+//        new String(parts(1)) should be ("A")
+//        new String(parts(2)) should be ("myValue")
+//      }
+//      "parts separated with double quote" in {
+//        val array = "SET A \"my value\"".getBytes()
+//        val parts = CommandParser.extractParts(array)
+//        parts.size should be (3)
+//        new String(parts(0)) should be ("SET")
+//        new String(parts(1)) should be ("A")
+//        new String(parts(2)) should be ("my value")
+//      }
+//    }
+
+    def parseCmd(cmd: String): List[Buf] = cmd.split(' ').toList.map(e => Buf.Utf8(e))
 
     "GET key" in {
-      val buf = Buf.Utf8("GET key")
+      val buf: List[Buf] = parseCmd("GET key")
       val command = CommandParser(buf)
       command shouldBe a[Get]
       val get = command.asInstanceOf[Get]
@@ -35,7 +37,7 @@ class CommandParserSpec extends FreeSpec with Matchers {
     }
 
     "SET key value" in {
-      val buf = Buf.Utf8("SET key value")
+      val buf: List[Buf] = parseCmd("SET key value")
       val command = CommandParser(buf)
       command shouldBe a[Set]
       val set = command.asInstanceOf[Set]
@@ -48,7 +50,7 @@ class CommandParserSpec extends FreeSpec with Matchers {
     }
 
     "SET key value XX" in {
-      val buf = Buf.Utf8("SET key value XX")
+      val buf: List[Buf] = parseCmd("SET key value XX")
       val command = CommandParser(buf)
       command shouldBe a[Set]
       val set = command.asInstanceOf[Set]
@@ -61,7 +63,7 @@ class CommandParserSpec extends FreeSpec with Matchers {
     }
 
     "SET key value PX 12 NX" in {
-      val buf = Buf.Utf8("SET key value PX 12 NX")
+      val buf: List[Buf] = parseCmd("SET key value PX 12 NX")
       val command = CommandParser(buf)
       command shouldBe a[Set]
       val set = command.asInstanceOf[Set]

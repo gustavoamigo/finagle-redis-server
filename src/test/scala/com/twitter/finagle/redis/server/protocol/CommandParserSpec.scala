@@ -68,6 +68,4 @@ class CommandParserSpec extends FreeSpec with Matchers {
       set should be (Set("key".getBytes, "value".getBytes, None, Some(12), true, false))
     }
   }
-
-
 }

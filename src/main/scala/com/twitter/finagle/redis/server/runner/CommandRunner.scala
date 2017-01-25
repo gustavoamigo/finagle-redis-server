@@ -8,7 +8,6 @@ case class StringValue(str: ByteArrayWrapper) extends Value
 case class IntegerValue(int: Int) extends Value
 case class ListValue(list: List[Value]) extends Value
 
-
 object CommandRunner {
 
   type KV = Map[ByteArrayWrapper, Value]

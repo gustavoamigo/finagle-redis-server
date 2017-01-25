@@ -36,6 +36,7 @@ object CommandParser {
           value = args(1)
         )
       case error =>
+        println(s"unknown command '${new String(error)}'")
         Unknown(s"unknown command '${new String(error)}'")
     }
   }
@@ -96,7 +97,4 @@ object CommandParser {
 
   private def parseArgBoolean(args: List[Array[Byte]], argKey: String) =
     args.exists(arr => util.Arrays.equals(arr, argKey.getBytes))
-
-
-
 }

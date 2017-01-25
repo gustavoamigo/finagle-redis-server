@@ -15,7 +15,7 @@ class CommandRunnerSpec extends FreeSpec with Matchers {
     reply shouldBe a[SimpleStringResp]
     val ok = reply.asInstanceOf[SimpleStringResp]
     new String(ok.str) should be ("OK")
-    kv("key".getBytes) should be (StringValue("value".getBytes))
+    kv("key".getBytes) should be ("value".getBytes)
   }
 
   "GET key" in {

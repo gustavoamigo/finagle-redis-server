@@ -1,5 +1,6 @@
 package com.twitter.finagle.redis.server.protocol
 
+import com.twitter.finagle.redis.server.ByteArrayKey
 import com.twitter.io.Buf
 import org.scalatest.FreeSpec
 import org.scalatest._
@@ -67,7 +68,11 @@ class CommandParserSpec extends FreeSpec with Matchers {
       val command = CommandParser(buf)
       command shouldBe a[Set]
       val set = command.asInstanceOf[Set]
-      set should be (Set("key".getBytes, "value".getBytes, None, Some(12), true, false))
+      set.key should be (new ByteArrayKey("key".getBytes))
+      set.value should be ("value".getBytes)
+      set.xx should be (false)
+      set.nx should be (true)
+      set.px should be (Some(12))
     }
   }
 }

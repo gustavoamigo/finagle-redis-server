@@ -1,13 +1,13 @@
 package com.twitter.finagle.redis.server.protocol
 
-import com.twitter.finagle.redis.server.ByteArrayWrapper
+import com.twitter.finagle.redis.server.ByteArrayKey
 
 sealed trait Resp {
   val EOL = "\r\n".getBytes
   def decode: Array[Byte]
 }
 
-case class SimpleStringResp(str: ByteArrayWrapper) extends Resp {
+case class SimpleStringResp(str: ByteArrayKey) extends Resp {
   override def decode: Array[Byte] = {
     val startString = "+".getBytes
     Array(startString, str: Array[Byte], EOL).flatten
@@ -28,7 +28,7 @@ case class IntegerResp(int: Long) extends Resp {
   }
 }
 
-case class BulkStringResp(str: ByteArrayWrapper) extends Resp {
+case class BulkStringResp(str: Array[Byte]) extends Resp {
   override def decode: Array[Byte] = {
     val startString = "$".getBytes
     if((str: Array[Byte]).isEmpty) {

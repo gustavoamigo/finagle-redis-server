@@ -1,6 +1,6 @@
 package com.twitter.finagle.redis
 
 package object server {
-  implicit def nativeToByteArray(arr: Array[Byte]): ByteArrayWrapper = new ByteArrayWrapper(arr)
-  implicit def byteArrayToNative(byteArray: ByteArrayWrapper): Array[Byte] = byteArray.byteArray
+  implicit def nativeToByteArray(arr: Array[Byte]): ByteArrayKey = new ByteArrayKey(arr)
+  implicit def byteArrayToNative(byteArray: ByteArrayKey): Array[Byte] = byteArray.byteArray
 }

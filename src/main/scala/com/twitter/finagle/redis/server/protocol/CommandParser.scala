@@ -2,7 +2,7 @@ package com.twitter.finagle.redis.server.protocol
 
 import java.util
 
-import com.twitter.finagle.redis.server.ByteArrayWrapper
+import com.twitter.finagle.redis.server.ByteArrayKey
 import com.twitter.io.Buf
 
 object CommandParser {
@@ -25,7 +25,7 @@ object CommandParser {
       case ("GET", args) if args.size == 1 =>
         Get(args(0))
       case ("MGET", args) =>
-        Mget(args.map(ba => new ByteArrayWrapper(ba)))
+        Mget(args.map(ba => new ByteArrayKey(ba)))
       case ("SET", args) if args.size >= 2 =>
         Set(
           key = args(0),

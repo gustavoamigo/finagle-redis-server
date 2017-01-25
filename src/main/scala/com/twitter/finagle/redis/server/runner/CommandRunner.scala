@@ -1,16 +1,12 @@
 package com.twitter.finagle.redis.server.runner
 
-import com.twitter.finagle.redis.server.ByteArrayWrapper
+import com.twitter.finagle.redis.server.ByteArrayKey
 import com.twitter.finagle.redis.server.protocol._
 import com.twitter.util.Try
 
-sealed trait Value
-case class StringValue(str: ByteArrayWrapper) extends Value
-case class ListValue(list: List[Value]) extends Value
-
 object CommandRunner {
 
-  type KV = Map[ByteArrayWrapper, Value]
+  type KV = Map[ByteArrayKey, Array[Byte]]
 
   def run(command: Command, kv: KV): (Resp, KV) = {
     command match {
@@ -35,37 +31,36 @@ object CommandRunner {
 
   def get(get: Get, kv: KV):(BulkStringResp, KV) = {
     kv.get(get.key) match {
-      case Some(StringValue(value)) => (BulkStringResp(value), kv)
+      case Some(value) => (BulkStringResp(value), kv)
       case _ => (Resp.Nil, kv)
     }
   }
 
   def mget(mget: Mget, kv: KV):(ArrayResp, KV) = {
-    val values = mget.keys.map(key => kv.get(key))
-      .collect { case Some(StringValue(e)) => e }
+    val values = mget.keys.map(key => kv.get(key)).collect{ case Some(str) => str}
       .map(BulkStringResp.apply)
     (ArrayResp(values), kv)
   }
 
   // TODO: Implement TTL
   def set(set: Set, kv: KV):(SimpleStringResp, KV) = {
-    (Resp.Ok, kv + ((set.key, StringValue(set.value))))
+    (Resp.Ok, kv + ((set.key, set.value)))
   }
 
   def append(append: Append, kv: KV):(IntegerResp, KV) = {
-    val previous = kv.get(append.key).collect { case StringValue(str) => str}.getOrElse(ByteArrayWrapper.empty)
+    val previous = kv.getOrElse(append.key, Array.emptyByteArray)
     val value = previous ++ append.value
-    val kvUpdated = kv + ((append.key, StringValue(value)))
+    val kvUpdated = kv + ((append.key, value))
     (IntegerResp(value.length), kvUpdated)
   }
 
   def incr(i: Incr, kv: KV):(Resp, KV) = {
-    val value = kv.get(i.key).collect { case StringValue(str) => str}.getOrElse(new ByteArrayWrapper("0".getBytes))
+    val value = kv.getOrElse(i.key, "0".getBytes)
     val numOpt = Try(new String(value).toLong).toOption
     numOpt match {
       case None => (ErrorResp("value is not an integer or out of range"), kv)
       case Some(num) =>
-        val newValue =  StringValue((num + 1).toString.getBytes)
+        val newValue =  (num + 1).toString.getBytes
         val kvUpdate = kv + ((i.key, newValue))
         (IntegerResp(num + 1), kvUpdate)
     }

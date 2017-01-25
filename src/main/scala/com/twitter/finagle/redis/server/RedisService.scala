@@ -12,7 +12,6 @@ class RedisService extends Service[List[Buf], Buf] {
   private var kv: CommandRunner.KV = Map.empty
   private val mutex = new AsyncMutex()
   override def apply(request: List[Buf]): Future[Buf] = {
-    //print(new String(Buf.ByteArray.Owned.extract(request)))
     val parsedCmd: Command = CommandParser(request)
     val sync = mutex.acquireAndRunSync {
       val (reply, newKv) = CommandRunner.run(parsedCmd, kv)

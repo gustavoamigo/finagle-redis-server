@@ -21,7 +21,3 @@ class RedisService extends Service[Buf, Buf] {
     sync.map(reply => ByteArray.apply(reply.decode :_*))
   }
 }
-
-
-
-

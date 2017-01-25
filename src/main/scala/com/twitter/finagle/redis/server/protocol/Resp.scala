@@ -2,33 +2,33 @@ package com.twitter.finagle.redis.server.protocol
 
 import com.twitter.finagle.redis.server.ByteArrayWrapper
 
-sealed trait Reply {
+sealed trait Resp {
   val EOL = "\r\n".getBytes
   def decode: List[Byte]
 }
 
-case class SimpleString(str: ByteArrayWrapper) extends Reply {
+case class SimpleStringResp(str: ByteArrayWrapper) extends Resp {
   override def decode: List[Byte] = {
     val startString = "+".getBytes
     List(startString, str: Array[Byte], EOL).flatten
   }
 }
 
-case class Error(msg: String) extends Reply {
+case class ErrorResp(msg: String) extends Resp {
   override def decode: List[Byte] = {
     val startString = "-ERR ".getBytes
     List(startString, msg.getBytes, EOL).flatten
   }
 }
 
-case class Integers(int: Long) extends Reply {
+case class IntegerResp(int: Long) extends Resp {
   override def decode: List[Byte] = {
     val startString = ":".getBytes
     List(startString, int.toString.getBytes, EOL).flatten
   }
 }
 
-case class BulkStrings(str: ByteArrayWrapper) extends Reply {
+case class BulkStringResp(str: ByteArrayWrapper) extends Resp {
   override def decode: List[Byte] = {
     val startString = "$".getBytes
     if((str: Array[Byte]).isEmpty) {
@@ -40,7 +40,7 @@ case class BulkStrings(str: ByteArrayWrapper) extends Reply {
   }
 }
 
-case class Arrays(values: List[Reply]) extends Reply {
+case class ArrayResp(values: List[Resp]) extends Resp {
   override def decode: List[Byte] = {
     val startString = "*".getBytes
     val firstLine = List(startString, values.length.toString.getBytes, EOL).flatten
@@ -49,8 +49,8 @@ case class Arrays(values: List[Reply]) extends Reply {
   }
 }
 
-object Reply {
-  val Ok = SimpleString("OK".getBytes)
-  val Nil = BulkStrings(Array.emptyByteArray)
+object Resp {
+  val Ok = SimpleStringResp("OK".getBytes)
+  val Nil = BulkStringResp(Array.emptyByteArray)
 }
 

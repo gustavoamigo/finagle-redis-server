@@ -11,6 +11,6 @@ object RedisServer extends App {
   val codec = Codec.ofPipelineFactory[List[Buf],Buf](RedisServerPipelineFactory.getPipeline)
   val server = ServerBuilder()
     .codec(codec)
-    .bindTo(new InetSocketAddress(8080))
+    .bindTo(new InetSocketAddress(6380))
     .name("redisServer").build(new RedisService())
 }

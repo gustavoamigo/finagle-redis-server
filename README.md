@@ -14,7 +14,7 @@ Commands coded so far:
 
 To run locally, right now it is binded to port 6380 
     
-    run com.twitter.finagle.redis.server.RedisServer
+    sbt run com.twitter.finagle.redis.server.RedisServer
      
 If you have redis installed, you can benchmark it using the following commands
    

@@ -42,9 +42,13 @@ object CommandParser {
         )
       case ("INCR", args) if args.size == 1 =>
         Incr(args(0))
+
+      case ("LPUSH", args) if args.size == 2 =>
+        Lpush(args(0), args(1))
       case error =>
         println(s"unknown command")
         Unknown(s"unknown command")
+
     }
   }
 
